@@ -23,13 +23,13 @@ export function PageData({ data }: { data: any }) {
           <div className="info">
             <span>Your Location</span>
             <span className="region">
-              <strong>{data.location.name}</strong>
+              <strong>{data.location?.name}</strong>
             </span>
           </div>
           <div className="info">
             <span>Current Temperature</span>
             <strong>
-              {data.current.temp_c}°C / {data.current.temp_f}°F
+              {data.current?.temp_c}°C / {data.current?.temp_f}°F
             </strong>
           </div>
         </div>

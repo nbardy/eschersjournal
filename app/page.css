@@ -1,0 +1,183 @@
+/* import { headers } from "next/headers";
+import { getWeatherData } from "./lib/utils";
+import { PageData } from "./components/page-data";
+
+import "./page.css";
+
+export const runtime = "edge";
+
+export const defaultRepoName = "default_repo";
+export default async function Page() {
+  return <Dashboard repo={defaultRepoName} />;
+}
+
+interface DashboardProps {
+  repo: string;
+}
+
+interface RepoData {
+  agents: AgentData[];
+  resultData: ResultData[];
+}
+
+interface AgentData {
+  name: string;
+  status: string;
+  lastSeen: string;
+  results: string[];
+}
+
+interface ResultData {
+  name: string;
+  file: string;
+}
+
+export const fakeRepoData = (): RepoData => {
+  return {
+    agents: [
+      {
+        name: "agent1",
+        status: "online",
+        lastSeen: "2021-01-01",
+        results: ["result1", "result2"],
+      },
+      {
+        name: "agent2",
+        status: "online",
+        lastSeen: "2021-01-01",
+        results: [],
+      },
+    ],
+    resultData: [
+      {
+        name: "result1",
+        file: "file1",
+      },
+      {
+        name: "result2",
+        file: "file2",
+      },
+    ],
+  };
+}; */
+
+/* export const getResultByName = (resultName: string, repo: RepoData) => {
+  const data = repo.resultData;
+  return data.find((result) => result.name === resultName);
+};
+
+export async function Dashboard(dashboardProps: DashboardProps) {
+  const data = fakeRepoData();
+
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <h2>Agents</h2>
+      {data.agents.map((agent, i) => (
+        <div key={i}>
+          <div className="info">
+            <div>{agent.name}</div>
+            <div>{agent.status}</div>
+            <div>{agent.lastSeen}</div>
+          </div>
+          <h3>Results</h3>
+          {agent.results
+            ?.map((resultName, i) => {
+              return getResultByName(resultName, data);
+            })
+            .filter((result): result is ResultData => !!result)
+            .map((result) => {
+              return (
+                <div className="result" key={i}>
+                  <div>{result.name}</div>
+                  <div>{result.file}</div>
+                </div>
+              );
+            })}
+        </div>
+      ))}
+    </div>
+  );
+} */
+
+/*/ Given the above html style as dashboard*/
+
+/* Path: app/components/page.css */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0 0.5rem;
+  text-align: center;
+}
+
+.main {
+  padding: 5rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer {
+  width: 100%;
+  height: 100px;
+  border-top: 1px solid #eaeaea;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer img {
+  margin-left: 0.5rem;
+}
+
+.agents {
+  display: flex;
+}
+
+/* add the missing classes with some light color backgorund  */
+
+
+
+.info {
+    background-color: #3e3e3e;
+    padding: 10px;
+    margin: 5px;
+    color: white;
+
+}
+
+.agents {
+    background-color: #f1f1f1;
+    padding: 10px;
+    margin: 5px;
+}
+
+.agent {
+    background-color: #565656;
+    width: 400px;
+}
+
+
+.results {
+    padding: 20px;
+    margin: 20px;
+    padding: 10px;
+    margin: 5px;
+}
+
+/* dark text for all light background */
+.agents,  .results {
+    color: rgb(26, 26, 26);
+}
+
+
+
+
+
+

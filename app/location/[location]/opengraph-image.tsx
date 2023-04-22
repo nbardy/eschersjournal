@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/server";
-import { getWeatherData } from "../lib/utils";
+import { getWeatherData } from "../../lib/utils";
 
 export const runtime = "edge";
 

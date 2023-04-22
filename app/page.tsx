@@ -1,14 +1,13 @@
-import { headers } from "next/headers";
-import { getWeatherData } from "./lib/utils";
-import { PageData } from "./components/page-data";
+import "./page.css";
+import { Dashboard } from "./components/dashboard";
 
 export const runtime = "edge";
 
+export const defaultRepoName = "default_repo";
 export default async function Page() {
-  const parsedCity = headers().get("x-vercel-ip-city");
-  const city =
-    !parsedCity || parsedCity === "null" ? "San Francisco" : parsedCity;
-  const data = await getWeatherData(city);
-
-  return <PageData data={data} />;
+  return <Dashboard repo={defaultRepoName} />;
 }
+
+// is defined takes a list of values or one or many as args
+// e.g. isDefined(x, y, z) or assertDefined(x) or assertDefined([x, y, z])
+// Will true if all values are defined and false otherwise

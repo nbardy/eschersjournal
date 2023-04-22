@@ -1,5 +1,5 @@
-import { PageData } from "../components/page-data";
-import { getWeatherData } from "../lib/utils";
+import { PageData } from "../../components/page-data";
+import { getWeatherData } from "../../lib/utils";
 
 export const runtime = "edge";
 
