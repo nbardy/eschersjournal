@@ -9,9 +9,10 @@ This project is a work in progress
 
 Plan:
 - [x] Wireframe Agents
-- [ ] Make basic UI to explore artifacts of agents run(in progress)
-- [ ] Finish coding agents so that they work(in progress)
-- [ ] Make backend that can launch jobs from frontend for some steering(in progress)
+- [x] basic ui to view agents and repos
+- [x] basic server to dispatch agent and repo commands
+- [ ] Hook up agents end to end
+- [ ] Make basic UI to view artifacts of agents run
 
 
 ## Agents Overview
