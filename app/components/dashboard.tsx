@@ -24,7 +24,6 @@ interface ResultData {
 }
 
 export async function Dashboard(dashboardProps: DashboardProps) {
-  const data = fakeRepoData();
   const textareaRefName = useRef<HTMLTextAreaElement>(null);
   const textareaRefTopic = useRef<HTMLTextAreaElement>(null);
 
@@ -129,6 +128,13 @@ export const fakeRepoData = (): RepoData => {
     ],
   };
 };
+
+const data = {
+  repos: {
+    fakeRepo: fakeRepoData(),
+  },
+};
+
 const getResultByName = (resultName: string, repo: RepoData) => {
   const data = repo.resultData;
   return data.find((result) => result.name === resultName);
