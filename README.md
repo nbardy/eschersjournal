@@ -2,14 +2,16 @@
 Math visuals that write themselves
 
 
+
 ![image](https://user-images.githubusercontent.com/1278972/230845767-450cef09-68a0-4e45-97c8-1ae716582cd5.png)
 
 This project is a work in progress
 
 Plan:
 - [x] Wireframe Agents
-- [ ] Make basic UI to explore artifacts of agents run
-- [ ] Finish coding agents so that they work
+- [ ] Make basic UI to explore artifacts of agents run(in progress)
+- [ ] Finish coding agents so that they work(in progress)
+- [ ] Make backend that can launch jobs from frontend for some steering(in progress)
 
 
 ## Agents Overview
