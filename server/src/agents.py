@@ -83,15 +83,19 @@ class Agent(abc.ABC):
         self.repo_id = repo_id
         self.loop = True
 
-    def launch(self):
+    # Factor out launch into start_loop and launch
+    def start_loop(self):
         while self.loop:
             job = self.get_next_job()
 
             if job is not None:
                 new_jobs, new_files = self.process_job(job)
-                self.process_job_fn_result(new_jobs, new_files)
+                self.process_job_fn_result(job, new_jobs, new_files)
             else:
-                time.sleep(5)  # Polling interval
+                time.sleep(5)
+
+    def launch(self):
+        self.start_loop()
 
     def process_job_fn_result(self, job_id, new_jobs, new_files):
         # Saving and uploading new files
@@ -104,17 +108,24 @@ class Agent(abc.ABC):
             self.add_job(job)
 
         # Update the agent results index
-        storage.update_repo_results_index(self.repo_id)
+        storage.update_repo_results_index(self.repo_id, job.id)
 
     def stop(self):
         self.loop = False
 
     def add_job(self, job):
-        storage.add_agent_job(self.id, job)
+        storage.save_pending_job(self.repo_id, job)
+
+    # get next job gets the jobs form storage and then lets the agent decide
+    # which job to process next
+    def get_next_job(self):
+        jobs = storage.get_pending_jobs(self.repo_id)
+        return self.decide_next_job(jobs)
 
     # abstract methods
+
     @abc.abstractmethod
-    def get_next_job(self):
+    def decide_next_job(self):
         # Implement your job retrieval logic here
         pass
 

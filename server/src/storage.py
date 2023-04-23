@@ -76,23 +76,17 @@ def add_focus(repo_id: str, new_focus: str):
         save_metadata(repo_id, metadata)
 
 
-def update_results_index(repo_id: str, job_id: str):
-    with _get_lock(repo_id):
-        results = load_results(repo_id)
-        results.append(job_id)
-        _save_to_folder(repo_id, "results", json.dumps(results), "index.json")
-
-
-def update_repo_results_index(repo_id: str, job_id: str):
-    with _get_lock(repo_id):
-        results = load_results(repo_id)
-        results.append(job_id)
-        _save_to_folder(repo_id, "results", json.dumps(results), "index.json")
-
-
 def save_and_upload_agent_result(repo_id: str, agent_id: str, job_id: str, content: str, filename: str):
     _save_to_folder(repo_id, f"results/{agent_id}/{job_id}",
                     content, filename)
+    update_repo_results_index(repo_id, agent_id, job_id)
+
+
+def update_repo_results_index(repo_id: str, agent_id: str, job_id: str):
+    with _get_lock(repo_id):
+        results = load_results(repo_id)
+        results.append(f"{agent_id}/{job_id}")
+        _save_to_folder(repo_id, "results", json.dumps(results), "index.json")
 
 
 def get_all_repo_ids() -> list:
@@ -124,3 +118,22 @@ def _load_from_folder(repo_id: str, folder: str, filename: str) -> str:
 
 def save_and_upload_file(repo_id: str, content: str, filename: str):
     _save_to_folder(repo_id, "results", content, filename)
+
+
+# job: json
+def save_pending_job(repo_id: str, job: dict):
+    _save_to_folder(repo_id, "pending_jobs",
+                    json.dumps(job), f"{job['job_id']}.json")
+
+
+def get_pending_job(repo_id: str, job_id: str) -> dict:
+    return json.loads(_load_from_folder(repo_id, "pending_jobs", f"{job_id}.json"))
+
+
+def get_pending_jobs(repo_id: str) -> list:
+    if use_s3:
+        response = s3.list_objects_v2(
+            Bucket=S3_BUCKET, Prefix=f"{repo_id}/pending_jobs/")
+        return [content["Key"].split("/")[-1].split(".")[0] for content in response["Contents"]]
+    else:
+        return [job.name.split(".")[0] for job in Path(f"{BASE_DIR}/{repo_id}/pending_jobs").iterdir() if job.is_file()]
