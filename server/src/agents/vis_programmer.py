@@ -8,8 +8,10 @@ import os
 import json
 import time
 
-class VisProgrammerAgent:
+from agents.types import Agent
 
+
+class VisProgrammerAgent(Agent):
     def __init__(self):
         self.preliminary_results_path = "Escher"
         self.final_results_path = "FinalResults"
@@ -52,7 +54,8 @@ class VisProgrammerAgent:
 
         # Populate the vis_requests queue with example requests
         # Replace this with your actual method of receiving requests
-        vis_requests.put({"topic": "Sample Visualization", "type": "bar_chart", "data": [1, 2, 3]})
+        vis_requests.put({"topic": "Sample Visualization",
+                         "type": "bar_chart", "data": [1, 2, 3]})
 
         while not vis_requests.empty():
             vis_request = vis_requests.get()
@@ -92,8 +95,8 @@ class VisProgrammerAgent:
             f.write(code)
 
         try:
-            result = subprocess.run(["node", "temp_code.js"], check=True, capture_output=True)
+            result = subprocess.run(
+                ["node", "temp_code.js"], check=True, capture_output=True)
             return None
         except subprocess.CalledProcessError as e:
             return e.stderr.decode("utf-8").strip()
-
