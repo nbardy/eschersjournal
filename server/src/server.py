@@ -121,6 +121,9 @@ async def get_all_repo():
     for id in repo_ids:
         agents_map[id] = agents.get_agents(id)
 
+    raise Exception(
+        "Let's add results as a new field, and add results id to each agent")
+
     return {
         "repo_ids": repo_ids,
         "metadata": metadata,

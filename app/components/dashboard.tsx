@@ -108,10 +108,11 @@ export async function Dashboard(dashboardProps: DashboardProps) {
     pollOps: allPollOps,
   });
 
-  const currentRepoMetadata = repoData?.metadata[currentRepoId];
-  const currentRepoAgents = currentRepoMetadata?.agents;
+  const currentRepoMetadata = repoData?.metadata[currentRepoId] ?? [];
+  const currentRepoAgents = repoData?.agents[currentRepoId] ?? [];
 
   console.log(repoData);
+  console.log(currentRepoAgents);
 
   return (
     <div>
@@ -171,7 +172,7 @@ export async function Dashboard(dashboardProps: DashboardProps) {
           <div className="agent" key={i}>
             <div className="info">
               <div>
-                {agent.name}
+                {"no name todo"}
                 {/* if status == "online" do a green emoji or red otherwise and print status */}
                 <span>
                   {agent.status === "online" ? (

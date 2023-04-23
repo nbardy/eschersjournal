@@ -84,7 +84,7 @@ export async function getSummary(summaryRequest: SummaryRequest): Promise<any> {
 interface AllRepoInfo {
   repo_ids: Array<string>;
   metadata: Record<string, { name: string; topic: string }>;
-  agents: Record<string, { status: string }>;
+  agents: Record<string, Array<{ status: string }>>;
 }
 
 export async function getAllRepo(): Promise<AllRepoInfo> {
