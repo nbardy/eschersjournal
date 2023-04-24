@@ -65,8 +65,30 @@ def create_results_index(repo_id: str):
     _save_to_folder(repo_id, "results", json.dumps([]), "index.json")
 
 
+# def load_results(repo_id: str) -> list:
+#     return json.loads(_load_from_folder(repo_id, "results", "index.json"))
+
+def _exists_in_folder(repo_id: str, folder: str, filename: str) -> bool:
+    if use_s3:
+        try:
+            s3.head_object(Bucket=S3_BUCKET,
+                           Key=f"{repo_id}/{folder}/{filename}")
+            return True
+        except s3.exceptions.ClientError as e:
+            return False
+    else:
+        return Path(f"{BASE_DIR}/{repo_id}/{folder}/{filename}").exists()
+
+
 def load_results(repo_id: str) -> list:
-    return json.loads(_load_from_folder(repo_id, "results", "index.json"))
+    # check if exists
+    if _exists_in_folder(repo_id, "results", "index.json"):
+        return json.loads(_load_from_folder(repo_id, "results", "index.json"))
+    else:
+        print(f"WARNING: results index for {repo_id} does not exist")
+        return []
+
+    # fault tolerance for missing file throw warning and return empty results
 
 
 def add_focus(repo_id: str, new_focus: str):

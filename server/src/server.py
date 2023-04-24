@@ -8,7 +8,7 @@ from pathlib import Path
 import boto3
 import os
 import storage
-import agents
+import agents.core as agents
 import summaries
 
 app = FastAPI()
@@ -121,13 +121,18 @@ async def get_all_repo():
     for id in repo_ids:
         agents_map[id] = agents.get_agents(id)
 
-    raise Exception(
-        "Let's add results as a new field, and add results id to each agent")
+    # "Let's add results as a new field, and add results id to each agent"
+
+    results = {}
+
+    for id in repo_ids:
+        results[id] = storage.load_results(id)
 
     return {
         "repo_ids": repo_ids,
         "metadata": metadata,
         "agents": agents_map,
+        "results": results,
     }
 
 

@@ -1,3 +1,6 @@
+from .. import storage
+
+import uuid
 import openai
 from transformers import pipeline
 from transformers import Blip2Processor, Blip2Model
@@ -6,22 +9,10 @@ from PIL import Image
 import requests
 from transformers import Blip2Processor, Blip2Model
 import torch
+from .types import Agent
 
-# VisualizationContext
-#
-# {
-#   "visualization_goal": <string>,
-#   // in latex
-#   "equations": {
-#     "eq1": <string>,
-#     "eq2": <string>,
-#   },
-#   "data": <string>,
-#   "context_data": <string>,
-# }
-# python type using lib
-import dataclasses
-from typing import List, Optional, Union, Dict, Any
+
+from typing import Dict
 from dataclasses import dataclass
 
 # VisualizationContext
@@ -35,21 +26,33 @@ class VisualizationContext:
     context_data: str
 
 
-def blip_pipeline():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-    model = Blip2Model.from_pretrained(
-        "Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
-    model.to(device)
-
-    return processor, model
-
-
-class VisualizationCriticAgent:
-    def __init__(self):
+class VisualizationCriticAgent(Agent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.blip_pipeline = blip_pipeline()
 
+    ##
+    # Abstract implementations below
+    ##
+    def decide_next_job(self, jobs):
+        if len(jobs) > 0:
+            return jobs[0]
+        else:
+            return None
+
+    def process_job(self, job_id):
+        # Download the job_id
+        job_json = storage.get_pending_job(job_id)
+        job_type = job_json["type"]
+        if job_type == "vis_request":
+            new_jobs, new_files = self.gen_vis(job_json)
+        else:
+            print("Error in VisualizationCriticAgent: Unknown job type")
+            raise Exception(f"Unknown job type: {job_type}")
+
+    ##
+    # Helpers Below
+    #
     def read_visualization(self, image_path, program, vis_goal):
         # Step 3: Use Hugging Face's blip model to read the image with 9-10 questions
         questions = self.generate_questions()
@@ -65,25 +68,38 @@ class VisualizationCriticAgent:
         return action
 
     def generate_questions(self):
-        # Implement this method to generate 9-10 questions for the visualization
-        # ...
-        return ["Sample question 1", "Sample question 2", "Sample question 3"]
+        # Generate 9-10 questions for the visualization using the Chat API
+        openai.api_key = "your_openai_api_key"
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Generate 10 questions to critique a visualization related to a mathematical scene:"}
+            ]
+        )
+
+        questions = response.choices[0].text.strip().split("\n")
+        return questions
+
+    def pass_to_openai(self, blip_results, questions, program, vis_goal):
+        openai.api_key = "your_openai_api_key"
+
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user",
+                "content": f"Blip model results: {blip_results}\nQuestions: {questions}\nProgram: {program}\nVisualization goal: {vis_goal}\nEvaluate the visualization and decide if it is correct or needs improvement. If it needs improvement, please suggest the size of the error and the action required (elaborate, fix, or leave alone):"}
+        ]
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+
+        openai_results = response.choices[0].text.strip()
+        return openai_results
 
     def ask_blip_questions(self, image_path, questions):
-        import torch
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-        model = Blip2Model.from_pretrained(
-            "Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
-        model.to(device)
-        image = Image.open(image_path)
-
-        prompt = "Question: how many cats are there? Answer:"
-        inputs = processor(images=image, text=prompt,
-                           return_tensors="pt").to(device, torch.float16)
-
-        outputs = model(**inputs)
         # Implement this method to ask the blip model questions about the visualization
         results = []
         for question in questions:
@@ -92,12 +108,20 @@ class VisualizationCriticAgent:
             results.append(answer)
         return results
 
-    def pass_to_openai(self, blip_results, questions, program, vis_goal):
-        # Implement this method to pass the results, questions, and the program to OpenAI along with the visualization goal
-        # ...
-        return "Sample OpenAI results"
 
-    def decide_action(self, openai_results):
-        # Implement this method to decide the action (elaborate, fix, or leave alone) based on OpenAI's response
-        # ...
-        return "leave alone"
+def main(agent_id=None, repo_id=None):
+    if agent_id is None:
+        agent_id = str(uuid.uuid4())
+    if repo_id is None:
+        repo_id = str(uuid.uuid4())
+
+    agent = VisualizationCriticAgent(agent_id=agent_id, repo_id=repo_id)
+    agent.launch()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--agent_id", type=str, default=None)
+    parser.add_argument("--repo_id", type=str, default=None)

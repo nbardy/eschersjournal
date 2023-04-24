@@ -39,9 +39,9 @@ class AllAgentsStore():
 all_agents_store = AllAgentsStore()
 
 agent_executors = {
-    "vis_critic_agent": "python3 -m agents.vis_critic_agent",
-    "research_agent": "python3 -m agents.research_agent",
-    "vis_programmer": "python3 -m agents.vis_programmer",
+    "vis_critic_agent": "python3 -m src.agents.vis_critic_agent",
+    "research_agent": "python3 -m src.agents.research",
+    "vis_programmer": "python3 -m src.agents.vis_programmer",
 }
 
 
@@ -62,6 +62,8 @@ def spawn_agent(repo_id: str, agent_type: str):
     # spawn the agent
     cmd = agent_executors[agent_type]
     cmd = cmd + " --repo_id " + repo_id + " --agent_id " + agent_id
+
+    print("Spawning agent: " + cmd)
 
     # run subprocess
     subprocess.Popen(cmd, shell=True)

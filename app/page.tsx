@@ -5,6 +5,7 @@ export const runtime = "edge";
 
 export const defaultRepoName = "default_repo";
 export default async function Page() {
+  "use client";
   return <Dashboard repo={defaultRepoName} />;
 }
 

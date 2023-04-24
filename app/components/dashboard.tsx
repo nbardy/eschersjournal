@@ -17,13 +17,14 @@ function useQueryFn<T>(
   const [error, setError] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const queryFn = useCallback(async () => {
-    try {
-      const response = await fn();
-      setData(response);
-    } catch (error) {
-      setError(error);
-    }
+  const queryFn = useCallback(() => {
+    fn()
+      .then((response) => {
+        setData(response);
+      })
+      .catch((error) => {
+        setError(error);
+      });
 
     setLoading(false);
   }, [fn]);
@@ -33,12 +34,13 @@ function useQueryFn<T>(
     if (opts.pollOps) {
       const interval = setInterval(() => {
         queryFn();
-      }, opts.pollOpts.ms);
+      }, opts.pollOps.ms);
+
       return () => clearInterval(interval);
     } else {
       queryFn();
     }
-  }, [opts.pollOpts, queryFn]);
+  }, [opts.pollOps, queryFn]);
 
   // This will minimize the number of times the consumer component re-renders
   const resultMemo = useMemo(() => {
@@ -85,7 +87,6 @@ const createAndSpawn = async (
     topic: topic,
   };
   const response = await createRepo(repoData);
-  console.log(response);
 
   await spawnOnRepo({
     repo_id: response.repo_id,
@@ -96,7 +97,7 @@ const createAndSpawn = async (
 
 const allPollOps = { ms: 200 };
 
-export async function Dashboard(dashboardProps: DashboardProps) {
+export function Dashboard(dashboardProps: DashboardProps) {
   const textareaRefName = useRef<HTMLTextAreaElement>(null);
   const textareaRefTopic = useRef<HTMLTextAreaElement>(null);
 
@@ -110,9 +111,7 @@ export async function Dashboard(dashboardProps: DashboardProps) {
 
   const currentRepoMetadata = repoData?.metadata[currentRepoId] ?? [];
   const currentRepoAgents = repoData?.agents[currentRepoId] ?? [];
-
-  console.log(repoData);
-  console.log(currentRepoAgents);
+  const currentRepoResultData = repoData?.results[currentRepoId] ?? [];
 
   return (
     <div>
@@ -120,7 +119,7 @@ export async function Dashboard(dashboardProps: DashboardProps) {
       <div>
         <h2>Repos</h2>
         {repoData != null &&
-          Object.keys(repoData).map((repoId, i) => {
+          repoData.repo_ids.map((repoId, i) => {
             const metadata = repoData.metadata[repoId];
             return (
               <div key={i}>
@@ -186,9 +185,9 @@ export async function Dashboard(dashboardProps: DashboardProps) {
                   )}
                 </span>
               </div>
-              <div>{agent.lastSeen}</div>
+              {/* <div>{agent.lastSeen}</div> */}
             </div>
-            <h3>Results</h3>
+            {/* <h3>Results</h3>
             {agent.results
               ?.map((resultName, i) => {
                 return getResultByName(resultName, currentRepoMetadat);
@@ -201,9 +200,18 @@ export async function Dashboard(dashboardProps: DashboardProps) {
                     <div>{result.file}</div>
                   </div>
                 );
-              })}
+              })} */}
           </div>
         ))}
+        <h3>Results</h3>
+        {currentRepoResultData.map((result: any, i) => {
+          return (
+            <div className="result" key={i}>
+              <div>{result.name}</div>
+              <div>{result.file}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

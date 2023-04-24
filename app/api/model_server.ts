@@ -80,11 +80,14 @@ export async function getSummary(summaryRequest: SummaryRequest): Promise<any> {
 
   return await response.json();
 }
-
+interface ServerAgent {
+  status: string;
+}
 interface AllRepoInfo {
   repo_ids: Array<string>;
   metadata: Record<string, { name: string; topic: string }>;
-  agents: Record<string, Array<{ status: string }>>;
+  agents: Record<string, Record<string, ServerAgent>>;
+  results: Record<string, any>;
 }
 
 export async function getAllRepo(): Promise<AllRepoInfo> {
