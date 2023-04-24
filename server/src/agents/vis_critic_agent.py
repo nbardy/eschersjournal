@@ -64,7 +64,7 @@ class VisualizationCriticAgent:
 
         return action
 
-    def generate_questions(self, context: Context):
+    def generate_questions(self):
         # Implement this method to generate 9-10 questions for the visualization
         # ...
         return ["Sample question 1", "Sample question 2", "Sample question 3"]

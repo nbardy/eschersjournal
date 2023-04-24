@@ -76,6 +76,10 @@ def add_focus(repo_id: str, new_focus: str):
         save_metadata(repo_id, metadata)
 
 
+def create_log_folder_for_agent(repo_id: str, agent_id: str):
+    return _mkdir(repo_id, f"agents/{agent_id}/logs")
+
+
 def save_and_upload_agent_result(repo_id: str, agent_id: str, job_id: str, content: str, filename: str):
     _save_to_folder(repo_id, f"results/{agent_id}/{job_id}",
                     content, filename)
@@ -97,14 +101,26 @@ def get_all_repo_ids() -> list:
         return [repo.name for repo in Path(BASE_DIR).iterdir() if repo.is_dir()]
 
 
-def _save_to_folder(repo_id: str, folder: str, content: str, filename: str):
+def _mkdir(repo_id: str, folder: str):
+    full_path = f"{BASE_DIR}/{repo_id}/{folder}"
     if use_s3:
         s3.put_object(Bucket=S3_BUCKET,
-                      Key=f"{repo_id}/{folder}/{filename}", Body=content)
+                      Key=f"{repo_id}/{folder}/")
+
     else:
-        folder_path = Path(f"{BASE_DIR}/{repo_id}/{folder}")
-        folder_path.mkdir(exist_ok=True)
-        Path(f"{folder_path}/{filename}").write_text(content)
+        Path(full_path).mkdir(parents=True, exist_ok=True)
+
+    return full_path
+
+
+def _save_to_folder(repo_id: str, folder: str, content: str, filename: str):
+    _mkdir(repo_id, folder)
+    if use_s3:
+        s3.put_object(Bucket=S3_BUCKET,
+                      Key=f"{repo_id}/{folder}/{filename}",
+                      Body=content.encode("utf-8"))
+    else:
+        Path(f"{BASE_DIR}/{repo_id}/{folder}/{filename}").write_text(content)
 
 
 def _load_from_folder(repo_id: str, folder: str, filename: str) -> str:
@@ -127,13 +143,32 @@ def save_pending_job(repo_id: str, job: dict):
 
 
 def get_pending_job(repo_id: str, job_id: str) -> dict:
-    return json.loads(_load_from_folder(repo_id, "pending_jobs", f"{job_id}.json"))
+    # if no such file or direcotry error, return empty list
+    try:
+        jobs = json.loads(_load_from_folder(
+            repo_id, "pending_jobs", f"{job_id}.json"))
+    except FileNotFoundError:
+        jobs = []
+
+    return jobs
 
 
+# def get_pending_jobs(repo_id: str) -> list:
+#     if use_s3:
+#         response = s3.list_objects_v2(
+#             Bucket=S3_BUCKET, Prefix=f"{repo_id}/pending_jobs/")
+#         return [content["Key"].split("/")[-1].split(".")[0] for content in response["Contents"]]
+#     else:
+#         return [job.name.split(".")[0] for job in Path(f"{BASE_DIR}/{repo_id}/pending_jobs").iterdir() if job.is_file()]
+
+# Redo this to also support a non existent folder
 def get_pending_jobs(repo_id: str) -> list:
     if use_s3:
         response = s3.list_objects_v2(
             Bucket=S3_BUCKET, Prefix=f"{repo_id}/pending_jobs/")
         return [content["Key"].split("/")[-1].split(".")[0] for content in response["Contents"]]
     else:
-        return [job.name.split(".")[0] for job in Path(f"{BASE_DIR}/{repo_id}/pending_jobs").iterdir() if job.is_file()]
+        try:
+            return [job.name.split(".")[0] for job in Path(f"{BASE_DIR}/{repo_id}/pending_jobs").iterdir() if job.is_file()]
+        except FileNotFoundError:
+            return []

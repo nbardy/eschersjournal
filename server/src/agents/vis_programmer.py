@@ -1,81 +1,95 @@
+
+from .. import storage
+import uuid
 import os
 import json
 import time
 import openai
 import subprocess
-from queue import Queue
-import os
-import json
-import time
+from .types import Agent
 
-from agents.types import Agent
+max_runs = 10
 
 
 class VisProgrammerAgent(Agent):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.preliminary_results_path = "Escher"
         self.final_results_path = "FinalResults"
 
-        # Create directories if they don't exist
-        os.makedirs(self.preliminary_results_path, exist_ok=True)
-        os.makedirs(self.final_results_path, exist_ok=True)
+    ##
+    # Abstract implementations below
+    ##
+    def decide_next_job(self, jobs):
+        if len(jobs) > 0:
+            return jobs[0]
+        else:
+            return None
 
-    def save_visualization(self, code, summary, image, is_final):
-        timestamp = int(time.time())
+    def process_job(self, job_id):
+        # Download the job_id
+        job_json = storage.get_pending_job(job_id)
+        job_type = job_json["type"]
+        if job_type == "vis_request":
+            new_jobs, new_files = self.gen_vis(job_json)
+        else:
+            print("Error in VisProgrammerAgent: Unknown job type")
+            raise Exception(f"Unknown job type: {job_type}")
 
-        # Choose the appropriate directory
-        target_dir = self.final_results_path if is_final else self.preliminary_results_path
+    ##
+    # Helpers Below
+    #
+    def save_visualization(self, code, summary, image, job_id):
+        new_files = {
+            f"{self.id}_code.html": code["html"],
+            f"{self.id}_code.js": code["js"],
+            f"{self.id}_code.css": code["css"],
+            f"{self.id}_summary.json": json.dumps(summary),
+            f"{self.id}_image.png": image
+        }
 
-        # Save code files
-        with open(f"{target_dir}/{timestamp}_code.html", "w") as f:
-            f.write(code["html"])
+        for file_name, content in new_files.items():
+            storage.save_and_upload_agent_result(
+                self.repo_id, self.agent_id, job_id, content, file_name)
 
-        with open(f"{target_dir}/{timestamp}_code.js", "w") as f:
-            f.write(code["js"])
+    def gen_vis(self, job_json):
+        file = self.job_fn(job_json, f"{self.id}_image.png")
 
-        with open(f"{target_dir}/{timestamp}_code.css", "w") as f:
-            f.write(code["css"])
+        new_jobs = []
+        new_files = [file]
 
-        # Save summary file
-        with open(f"{target_dir}/{timestamp}_summary.json", "w") as f:
-            json.dump(summary, f)
+        return new_jobs, new_files
 
-        # Save image file
-        with open(f"{target_dir}/{timestamp}_image.png", "wb") as f:
-            f.write(image)
+    def job_fn(self, job, ):
+        job_id = job.job_id
+        vis_request = job["vis_request"]
 
-        # Update the index file
-        self.update_index_file(target_dir, timestamp, summary)
-
-    # ...
-
-    def launch(self):
-        vis_requests = Queue()
-
-        # Populate the vis_requests queue with example requests
-        # Replace this with your actual method of receiving requests
-        vis_requests.put({"topic": "Sample Visualization",
-                         "type": "bar_chart", "data": [1, 2, 3]})
-
-        while not vis_requests.empty():
-            vis_request = vis_requests.get()
-            self.process_vis_request(vis_request)
-
-    def process_vis_request(self, vis_request):
         openai.api_key = "your_openai_api_key"
 
-        prompt = f"Create a three.js program that draws a mathematical scene related to {vis_request['topic']} on a canvas."
-        code = self.generate_code_with_openai(prompt)
+        # Temp filename png file
+        id = str(uuid.uuid4())
+        png_file = f"output-{id}.png"
 
+        filename = png_file
+
+        prompt = f"""Create a three.js program that draws a mathematical scene related to topic {vis_request['topic']} , and goal: {vis_request['goal']} canvas it should then save that canvas in {filename}.
+                  JS Code: """
         error = self.execute_code(code)
 
-        while error:
-            prompt = f"The following error occurred while executing the code: {error}. Please provide an updated version of the code."
+        code = self.generate_code_with_openai(prompt)
+
+        runs = 0
+        while error and runs < max_runs:
+            runs = runs + 1
+            prompt = f"The following error occurred while executing the code.\nError: {error}\nCode:{code}. Please provide an updated version of the code. Updated Code:"
             code = self.generate_code_with_openai(prompt)
             error = self.execute_code(code)
 
         # Save the visualization when error-free
-        # ...
+        summary = {"topic": vis_request["topic"], "type": vis_request["type"]}
+        self.save_visualization(code, summary, png_file, job_id)
+
+        return png_file
 
     def generate_code_with_openai(self, prompt):
         response = openai.Completion.create(
@@ -100,3 +114,25 @@ class VisProgrammerAgent(Agent):
             return None
         except subprocess.CalledProcessError as e:
             return e.stderr.decode("utf-8").strip()
+
+
+def main(agent_id=None, repo_id=None):
+    if agent_id is None:
+        agent_id = str(uuid.uuid4())
+    if repo_id is None:
+        repo_id = str(uuid.uuid4())
+
+    agent = VisProgrammerAgent(agent_id=agent_id, repo_id=repo_id)
+    agent.launch()
+
+
+if __name__ == "__main__":
+    # argparse first argument is repo id
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--agent_id", type=str, default=None)
+    parser.add_argument("--repo_id", type=str, default=None)
+    args = parser.parse_args()
+
+    main(args.agent_id, args.repo_id)

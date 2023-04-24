@@ -44,6 +44,7 @@ agent_executors = {
     "vis_programmer": "python3 -m agents.vis_programmer",
 }
 
+
 all_types = list(agent_executors.keys())
 
 
@@ -60,6 +61,7 @@ def spawn_agent(repo_id: str, agent_type: str):
 
     # spawn the agent
     cmd = agent_executors[agent_type]
+    cmd = cmd + " --repo_id " + repo_id + " --agent_id " + agent_id
 
     # run subprocess
     subprocess.Popen(cmd, shell=True)
