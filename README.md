@@ -11,15 +11,17 @@ Plan:
 - [x] Wireframe Agents
 - [x] basic ui to view agents and repos
 - [x] basic server to dispatch agent and repo commands
+- [x] ui to spawn agents and create repos
 - [ ] Hook up agents end to end
   - [x] Agents are launching
   - [x] Agents are looping
-  - [ ] Make agent data flow
-- [ ] Make basic UI to view artifacts of agents run(e.g. load file and img)
+  - [x] Make agent data flow
+  - [ ] Fix E2E bugs
+- [ ] basic UI to view artifacts of agents run(e.g. load file and img)
 
 ## Agents Overview
 
-The project consist of a set of agents that magically do research for you
+The project consist of a set of agents that magically do research for you. extensible by implimeneting a new worker type.
 
 ### Vis Programmer Agent
 
