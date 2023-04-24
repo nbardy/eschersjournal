@@ -52,6 +52,12 @@ function useQueryFn<T>(
   return resultMemo;
 }
 
+const available_agent_types = [
+  "vis_critic_agent",
+  "research_agent",
+  "vis_programmer",
+];
+
 interface DashboardProps {
   repo: string;
 }
@@ -88,9 +94,14 @@ const createAndSpawn = async (
   };
   const response = await createRepo(repoData);
 
-  await spawnOnRepo({
-    repo_id: response.repo_id,
-  });
+  await Promise.all(
+    available_agent_types.map(async (agentType) => {
+      await spawnOnRepo({
+        repo_id: response.repo_id,
+        agent_type: agentType,
+      });
+    })
+  );
 
   return response;
 };
@@ -159,15 +170,20 @@ export function Dashboard(dashboardProps: DashboardProps) {
       </div>
       <h2>Current Repo: {currentRepoId}</h2>
       <h2>Agents</h2>
-      <button
-        onClick={() => {
-          spawnOnRepo({ repo_id: currentRepoId });
-        }}
-      >
-        Spawn
-      </button>
+      {available_agent_types.map((agentType) => {
+        return (
+          <button
+            key={agentType}
+            onClick={() => {
+              spawnOnRepo({ repo_id: currentRepoId, agent_type: agentType });
+            }}
+          >
+            Spawn
+          </button>
+        );
+      })}
       <div className="agents">
-        {currentRepoAgents.map((agent, i) => (
+        {Object.values(currentRepoAgents).map((agent, i) => (
           <div className="agent" key={i}>
             <div className="info">
               <div>

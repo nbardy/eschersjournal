@@ -8,6 +8,7 @@ export interface RepoCreate {
 
 export interface AgentSpawn {
   repo_id: string;
+  agent_type: string;
 }
 
 export interface FocusUpdate {
